@@ -1,3 +1,8 @@
+/target
+/classes
+/checkouts
+profiles.clj
+>>>>>>> first
 pom.xml
 pom.xml.asc
 *.jar
@@ -12,3 +17,7 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
+/.lein-*
+/.nrepl-port
+.hgignore
+.hg/

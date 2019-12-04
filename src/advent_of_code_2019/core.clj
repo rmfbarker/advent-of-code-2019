@@ -79,3 +79,16 @@
 
 (defn solve []
   (apply distance (clojure.string/split-lines (slurp (io/resource "input-day3")))))
+
+
+;; Day 4
+
+(defn valid-password? [pwd]
+  (and
+    (= (count (str pwd)) 6)
+    (< 402328 pwd 864247)
+    (some #(= 2 (count %)) (partition-by identity (seq (str pwd))))
+    (apply <= (map (comp #(Integer/parseInt %) str) (seq (str pwd))))))
+
+(comment
+  (count (filter valid-password? (range 402328 (inc 864247)))))

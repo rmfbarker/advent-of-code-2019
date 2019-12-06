@@ -7,32 +7,24 @@
 (def file-input (slurp (io/resource "input-day6")))
 
 (defn parse-orbits [orbits]
-  (into {} (map
-             (fn [orbit]
-               (vec (reverse (clojure.string/split orbit #"\)"))))
-             (clojure.string/split-lines orbits))))
+  (->> (clojure.string/split-lines orbits)
+       (map #(-> (clojure.string/split % #"\)") reverse vec))
+       (into {})))
 
-(defn path-to-com [orbits planet]
-  (take-while identity
-              (iterate orbits planet)))
+(defn path-to [orbits from to]
+  (take-while #(not= to %)
+              (iterate orbits from)))
 
-(defn path-to-planet [orbits planet path-to-planet]
-  (take-while #(not= path-to-planet %)
-              (iterate orbits planet)))
-
-(defn distance-from-com [orbits planet]
-  (dec
-    (count
-      (path-to-com orbits planet))))
+(defn distance-from [orbits from planet]
+  (count
+    (path-to orbits planet from)))
 
 (defn total-orbits [data]
   (let [orbits  (parse-orbits data)
         planets (keys orbits)]
-    (reduce
-      +
-      (map
-        (partial distance-from-com orbits)
-        planets))))
+    (reduce + (map
+                (partial distance-from orbits "COM")
+                planets))))
 
 (defn common-orbit [orbits x y]
   (first
@@ -40,20 +32,20 @@
       (take-while
         #(apply = %)
         (map vector
-             (reverse (path-to-com orbits x))
-             (reverse (path-to-com orbits y)))))))
+             (reverse (path-to orbits x "COM"))
+             (reverse (path-to orbits y "COM")))))))
 
 (defn orbital-transfers [orbits x y]
   (let [common (common-orbit orbits x y)]
-    (+ (dec (count (path-to-planet orbits x common)))
-       (dec (count (path-to-planet orbits y common)))
-       )))
+    (+ (dec (distance-from orbits common x))
+       (dec (distance-from orbits common y)))))
 
 (deftest day6
   (is (= 42 (total-orbits test-input)))
   (is (= 142497 (total-orbits file-input)))
   (is (= "D" (common-orbit (parse-orbits test-input-2) "YOU" "SAN")))
   (is (= 4 (orbital-transfers (parse-orbits test-input-2) "YOU" "SAN")))
+  (is (= 301 (orbital-transfers (parse-orbits file-input) "YOU" "SAN")))
   )
 
 (comment

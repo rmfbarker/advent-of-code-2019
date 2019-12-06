@@ -5,14 +5,14 @@
 ;; Day 5
 
 ; given an opcode, return a tuple of the instruction and parameter modes for the instruction params
-(defn parse-opcode [x]
-  (let [x (format "%02d" x)]
+(defn parse-opcode [code]
+  (let [x (format "%02d" code)]
     [(subs x (- (count x) 2))
      (concat (map #(Integer/parseInt (str %)) (drop 2 (reverse x)))
              (repeat 0))]))
 
-(defn evolve [program pos input output]
-  (let [[opcode & parameters] (drop pos program)
+(defn evolve [program pointer input output]
+  (let [[opcode & parameters] (drop pointer program)
         [instruction modes] (parse-opcode opcode)
         get-value (fn [pos]
                     (let [param (nth parameters pos)
@@ -24,61 +24,61 @@
       "01" [(assoc program (nth parameters 2) (+
                                                 (get-value 0)
                                                 (get-value 1)))
-            (+ 4 pos)
+            (+ 4 pointer)
             output]
 
       ;; MULTIPLY
       "02" [(assoc program (nth parameters 2) (*
                                                 (get-value 0)
                                                 (get-value 1)))
-            (+ 4 pos)
+            (+ 4 pointer)
             output]
 
       ;; STORE
       "03" [(assoc program (nth parameters 0) input)
-            (+ 2 pos)
+            (+ 2 pointer)
             output]
 
       ;; OUTPUT
       "04" [program
-            (+ 2 pos)
+            (+ 2 pointer)
             (get-value 0)]
 
       ;; JUMP if true
       "05" [program
             (if (not= 0 (get-value 0))
               (get-value 1)
-              (+ 3 pos))
+              (+ 3 pointer))
             output]
 
       ;; JUMP if false
       "06" [program
             (if (= 0 (get-value 0))
               (get-value 1)
-              (+ 3 pos))
+              (+ 3 pointer))
             output]
 
       ;; LESS THAN
       "07" [(assoc program (nth parameters 2)
                            (if (< (get-value 0) (get-value 1))
                              1 0))
-            (+ 4 pos)
+            (+ 4 pointer)
             output]
 
       ;; Equals
       "08" [(assoc program (nth parameters 2)
                            (if (= (get-value 0) (get-value 1))
                              1 0))
-            (+ 4 pos)
+            (+ 4 pointer)
             output])))
 
 (defn compute [program input]
   (loop [program program
-         pos     0
+         pointer 0
          output  nil]
-    (if (= (nth program pos) 99)
+    (if (= (nth program pointer) 99)
       output
-      (let [[program pos output] (evolve program pos input output)]
+      (let [[program pos output] (evolve program pointer input output)]
         (recur program pos output)))))
 
 (deftest day-5

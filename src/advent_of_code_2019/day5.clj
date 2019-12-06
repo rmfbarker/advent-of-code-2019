@@ -5,8 +5,8 @@
 ;; Day 5
 
 ; given an opcode, return a tuple of the instruction and parameter modes for the instruction params
-(defn parse-opcode [code]
-  (let [x (format "%02d" code)]
+(defn parse-opcode [x]
+  (let [x (format "%02d" x)]
     [(subs x (- (count x) 2))
      (concat (map #(Integer/parseInt (str %)) (drop 2 (reverse x)))
              (repeat 0))]))
@@ -78,8 +78,8 @@
          output  nil]
     (if (= (nth program pointer) 99)
       output
-      (let [[program pos output] (evolve program pointer input output)]
-        (recur program pos output)))))
+      (let [[program pointer output] (evolve program pointer input output)]
+        (recur program pointer output)))))
 
 (deftest day-5
   (testing

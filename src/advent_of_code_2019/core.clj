@@ -92,3 +92,92 @@
 
 (comment
   (count (filter valid-password? (range 402328 (inc 864247)))))
+
+;; Day 5
+
+;; parameter modes
+(defn look-up [mode parameter instructions]
+  (condp = mode
+    0 (get instructions parameter)                          ;; position mode
+    1 parameter                                             ;;immediate mode
+    ))
+
+; given an opcode, return a tuple of the instruction and parameter modes for the instruction params
+(defn parse-opcode [x]
+  (let [x (format "%02d" x)]
+    [(subs x (- (count x) 2))
+     (concat (map #(Integer/parseInt (str %)) (drop 2 (reverse x)))
+             (repeat 0))]))
+
+(defn day-5 []
+  (let [file-input (-> (slurp (io/resource "day-2-input"))
+                       clojure.string/trim
+                       (clojure.string/split #","))
+        program    (mapv #(Integer/parseInt %) file-input)
+        evolve     (fn [instructions pos]
+                     (let [[opcode arg1 arg2 arg3] (drop pos instructions)
+                           cmd    (if (= opcode 1) + *)
+                           result (cmd (get instructions arg1)
+                                       (get instructions arg2))]
+                       (assoc instructions arg3 result)))
+        compute    (fn [noun verb]
+                     (reduce (fn [instructions pos]
+                               (if (= 99 (get instructions pos))
+                                 (reduced (first instructions))
+                                 (evolve instructions pos)))
+                             (assoc program 1 noun 2 verb)
+                             (range 0 (count program) 4)))]
+    (first
+      (for [noun (range 99)
+            verb (range 99)
+            :when (= (compute noun verb)
+                     19690720)]
+        (+ verb (* 100 noun))))))
+
+(defn evolve [program pos input]
+  (let [[opcode & parameters] (drop pos program)
+        [instruction modes] (parse-opcode opcode)
+        get-value (fn [pos]
+                    (let [param (nth parameters pos)
+                          mode  (nth modes pos)]
+                      (if (= 0 mode) (nth program param)
+                                     param)))]
+    (condp = instruction
+      "01" [(assoc program (nth parameters 2) (+
+                                                (get-value 0)
+                                                (get-value 1)))
+            (+ 4 pos)
+            input]
+
+      "02" [(assoc program (nth parameters 2) (*
+                                                (get-value 0)
+                                                (get-value 1)))
+            (+ 4 pos)
+            input]
+
+      "03" [(assoc program (nth parameters 0) input)
+            (+ 2 pos)
+            input]
+
+      "04" [program
+            (+ 2 pos)
+            (get-value 0)]
+
+      )))
+
+
+(comment
+  (loop [program (mapv read-string (clojure.string/split
+                                     (clojure.string/trim
+                                       (slurp
+                                         (io/resource "input-day5")))
+                                     #","))
+         pos     0
+         input   1]
+    (if (= (nth program pos) 99)
+      input
+      (let [[program pos input] (evolve program pos input)]
+        (println pos input)
+        (recur program pos input))))
+
+  )

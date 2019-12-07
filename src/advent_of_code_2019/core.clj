@@ -1,6 +1,7 @@
 (ns advent-of-code-2019.core
   (:gen-class)
   (:require [clojure.java.io :as io]
+            [clojure.set]
             [clojure.test :refer :all]))
 
 ;; Day 1

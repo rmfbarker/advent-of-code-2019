@@ -11,31 +11,20 @@
        (map #(-> (clojure.string/split % #"\)") reverse vec))
        (into {})))
 
-(defn path-to-com [orbits planet]
-  (take-while identity
-              (iterate orbits planet)))
-
-(defn path-to-planet [orbits planet path-to-planet]
-  (take-while #(not= path-to-planet %)
-              (iterate orbits planet)))
-
 (defn path-to [orbits from to]
-  (take-while #(not= to %)
+  (take-while (complement #{to})
               (iterate orbits from)))
 
 (defn distance-from-com [orbits planet]
-  (dec
-    (count
-      (path-to-com orbits planet))))
+  (count
+    (path-to orbits planet "COM")))
 
 (defn total-orbits [data]
   (let [orbits  (parse-orbits data)
         planets (keys orbits)]
-    (reduce
-      +
-      (map
-        (partial distance-from-com orbits)
-        planets))))
+    (reduce (fn [sum planet]
+              (+ sum (distance-from-com orbits planet)))
+            0 planets)))
 
 (defn common-orbit [orbits x y]
   (reduce
@@ -48,8 +37,8 @@
 
 (defn orbital-transfers [orbits x y]
   (let [common (common-orbit orbits x y)]
-    (+ (dec (count (path-to-planet orbits x common)))
-       (dec (count (path-to-planet orbits y common))))))
+    (+ (dec (count (path-to orbits x common)))
+       (dec (count (path-to orbits y common))))))
 
 (deftest day6-test
   (is (= 42 (total-orbits test-input)))

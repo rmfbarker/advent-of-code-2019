@@ -2,8 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]))
 
-(defn read-program [filename] (mapv read-string (clojure.string/split
-                                                  (clojure.string/trim
+(defn read-program [filename]
+  (mapv read-string (clojure.string/split
+
+                      (clojure.string/trim
                                                     (slurp
                                                       (io/resource filename)))
                                                   #",")))
@@ -21,7 +23,7 @@
      (concat (map #(Integer/parseInt (str %)) (drop 2 (reverse x)))
              (repeat 0))]))
 
-(defn evolve [program pointer input output]
+(defn evolve [program pointer input]
   (let [[opcode & parameters] (drop pointer program)
         [instruction modes] (parse-opcode opcode)
         get-value (fn [pos]
@@ -36,7 +38,7 @@
                                                 (get-value 1)))
             (+ 4 pointer)
             input
-            output]
+            nil]
 
       ;; MULTIPLY
       "02" [(assoc program (nth parameters 2) (*
@@ -44,13 +46,13 @@
                                                 (get-value 1)))
             (+ 4 pointer)
             input
-            output]
+            nil]
 
-      ;; INPUT value, pause
+      ;; INPUT value, pause if nothing in buffer
       "03" [(assoc program (nth parameters 0) (first input))
             (+ 2 pointer)
             (rest input)
-            output]
+            nil]
 
       ;; OUTPUT value, stop
       "04" [program
@@ -64,7 +66,7 @@
               (get-value 1)
               (+ 3 pointer))
             input
-            output]
+            nil]
 
       ;; JUMP if false
       "06" [program
@@ -72,7 +74,7 @@
               (get-value 1)
               (+ 3 pointer))
             input
-            output]
+            nil]
 
       ;; LESS THAN
       "07" [(assoc program (nth parameters 2)
@@ -80,7 +82,7 @@
                              1 0))
             (+ 4 pointer)
             input
-            output]
+            nil]
 
       ;; Equals
       "08" [(assoc program (nth parameters 2)
@@ -88,7 +90,7 @@
                              1 0))
             (+ 4 pointer)
             input
-            output])))
+            nil])))
 
 (defn compute [program input]
   (loop [program program
@@ -97,7 +99,7 @@
          output  nil]
     (if (= (nth program pointer) 99)
       output
-      (let [[program pointer input output] (evolve program pointer input output)]
+      (let [[program pointer input output] (evolve program pointer input)]
         (recur program pointer input output)))))
 
 (deftest solution
@@ -131,7 +133,6 @@
 
 (defn run-computer [computer amp-input]
   (let [[program pointer input-buffer] computer]
-
     (loop [program program
            pointer pointer
            input   (conj input-buffer amp-input)
@@ -145,7 +146,7 @@
         [program pointer input output false]
 
         :else
-        (let [[program pointer input output] (evolve program pointer input nil)]
+        (let [[program pointer input output] (evolve program pointer input)]
                 (recur program pointer input output))))))
 
 (defn init-computers [program phase-sequence]
@@ -156,12 +157,10 @@
          input-signal 0]
     (if-not computer
       input-signal
-      (let [computer-state (run-computer computer input-signal)
-            [program pointer input output halted computer-name] computer-state]
-        ;(println (drop 1 computer-state))
-        (recur (if halted
-                 computers
-                 (conj (into [] computers) [program pointer input computer-name output]))
+      (let [[program pointer input output halted] (run-computer computer input-signal)]
+        (recur (if halted computers
+                          (conj (into [] computers)
+                                [program pointer input]))
                output)))))
 
 (defn solve-part2 []

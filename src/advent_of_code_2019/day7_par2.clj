@@ -155,11 +155,10 @@
               (recur program pointer input output halted))))
 
   )
-(def example-program-1 [3 26 1001 26 -4 26 3 27 1002 27 2 27 1 27 26 27 4 27 1001 28 -1 28 1005 28 6 99 0 0 5])
-(def example-phase-sequence-1 [9 8 7 6 5])
+
 
 (defn init-computer [program phase computer-name]
-  [program 0 [phase] computer-name])
+  [program 0 [phase] computer-name nil])
 
 (defn run-computer [computer amp-input]
   (let [[program pointer input-buffer computer-name] computer]
@@ -173,79 +172,49 @@
         :else (let [[program pointer input output] (evolve program pointer input nil)]
                 (recur program pointer input output))))))
 
-(run-computer (init-computer example-program-1 9 "A")
-              0)
-
-(let [initial-computer-states (mapv #(init-computer example-program-1 (first %1) (second %1))
-                                    (map vector
-                                         example-phase-sequence-1
-                                         ["A" "B" "C" "D" "E"]))]
-  (loop [[computer & computers] initial-computer-states
-         input-signal 0]
-
-    (let [computer-state (run-computer computer input-signal)
-          [program pointer input output halted computer-name] computer-state]
-      (println computer-state)
-      (if halted
-        (do
-          ;(println "amp" computer-name "has halted with output" output)
-          output)
-        (do
-          (println "amp" computer-name " outputed" output)
-          (recur (conj (into [] computers)
-                       [program pointer input computer-name])
-                 output))))))
-
-(let [initial-computer-states (mapv #(init-computer [3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001, 54,
-                                                     -5, 54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53, 55, 53, 4,
-                                                     53, 1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10]
-                                                    (first %1) (second %1))
-                                    (map vector
-                                         [9, 7, 8, 5, 6]
-
-                                         ["A" "B" "C" "D" "E"]))]
-  (loop [[computer & computers] initial-computer-states
-         input-signal 0]
-
-    (let [computer-state (run-computer computer input-signal)
-          [program pointer input output halted computer-name] computer-state]
-      (println computer-state)
-      (if halted
-        (do
-          ;(println "amp" computer-name "has halted with output" output)
-          output)
-        (do
-          (println "amp" computer-name " outputed" output)
-          (recur (conj (into [] computers)
-                       [program pointer input computer-name])
-                 output))))))
+(defn init-computers [program phase-sequence]
+  (mapv #(init-computer program
+                        (first %1) (second %1))
+        (map vector
+             phase-sequence
+             ["A" "B" "C" "D" "E"])))
 
 (defn calculate-signal [program phase-sequence]
-  (let [initial-computer-states (mapv #(init-computer program
-                                                      (first %1) (second %1))
-                                      (map vector
-                                           phase-sequence
-                                           ["A" "B" "C" "D" "E"]))]
-    (loop [[computer & computers] initial-computer-states
-           input-signal 0]
-
+  (loop [[computer & computers] (init-computers program phase-sequence)
+         input-signal 0]
+    (if-not computer
+      input-signal
       (let [computer-state (run-computer computer input-signal)
             [program pointer input output halted computer-name] computer-state]
-        (if halted
-          input-signal
-          (recur (conj (into [] computers)
-                       [program pointer input computer-name])
-                 output))))))
+        (recur (if halted
+                 computers
+                 (conj (into [] computers) [program pointer input computer-name output]))
+               output)))))
 
 (deftest part2
 
   (is (= 139629729
          (calculate-signal [3 26 1001 26 -4 26 3 27 1002 27 2 27 1 27 26
                             27 4 27 1001 28 -1 28 1005 28 6 99 0 0 5]
-                           [9 8 7 6 5])))
+                           [9 8 7 6 5])
+         ))
 
   (is (= 18216
          (calculate-signal [3 52 1001 52 -5 52 3 53 1 52 56 54 1007 54 5 55 1005 55 26 1001 54
                             -5 54 1105 1 12 1 53 54 53 1008 54 0 55 1001 55 1 55 2 53 55 53 4
                             53 1001 56 -1 56 1005 56 6 99 0 0 0 0 10]
-                           [9 7 8 5 6]))))
+                           [9 7 8 5 6])
+         )))
+
+(defn solve-part2 []
+  (apply max (let [program    (read-program "input-day7")
+                   all-phases (permutations [5 6 7 8 9])]
+               (map
+                 (fn [phase-seq]
+                   (calculate-signal program phase-seq))
+                 all-phases
+                 )))
+  )
+
+(deftest part2
+  (is (= 27561242 (solve-part2))))

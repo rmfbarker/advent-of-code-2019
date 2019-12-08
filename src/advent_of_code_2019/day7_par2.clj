@@ -157,27 +157,23 @@
   )
 
 
-(defn init-computer [program phase computer-name]
-  [program 0 [phase] computer-name nil])
+(defn init-computer [program phase]
+  [program 0 [phase] nil])
 
 (defn run-computer [computer amp-input]
-  (let [[program pointer input-buffer computer-name] computer]
+  (let [[program pointer input-buffer] computer]
     (loop [program program
            pointer pointer
            input   (conj (into [] input-buffer) amp-input)
            output  nil]
       (cond
-        (= (nth program pointer) 99) [program pointer input output true computer-name] ;; terminate
-        output [program pointer input output false computer-name] ;; pass output to next amplifier/computer, capture current state
+        (= (nth program pointer) 99) [program pointer input output true] ;; terminate
+        output [program pointer input output false] ;; pass output to next amplifier/computer, capture current state
         :else (let [[program pointer input output] (evolve program pointer input nil)]
                 (recur program pointer input output))))))
 
 (defn init-computers [program phase-sequence]
-  (mapv #(init-computer program
-                        (first %1) (second %1))
-        (map vector
-             phase-sequence
-             ["A" "B" "C" "D" "E"])))
+  (mapv #(init-computer program %) phase-sequence))
 
 (defn calculate-signal [program phase-sequence]
   (loop [[computer & computers] (init-computers program phase-sequence)

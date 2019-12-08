@@ -2,6 +2,19 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]))
 
+(defn read-program [filename] (mapv read-string (clojure.string/split
+                                                  (clojure.string/trim
+                                                    (slurp
+                                                      (io/resource filename)))
+                                                  #",")))
+
+(defn permutations [s]
+  (lazy-seq
+    (if (seq (rest s))
+      (apply concat (for [x s]
+                      (map #(cons x %) (permutations (remove #{x} s)))))
+      [s])))
+
 (defn parse-opcode [x]
   (let [x (format "%02d" x)]
     [(subs x (- (count x) 2))
@@ -87,12 +100,6 @@
       (let [[program pointer input output] (evolve program pointer input output)]
         (recur program pointer input output)))))
 
-(defn read-program [filename] (mapv read-string (clojure.string/split
-                                                  (clojure.string/trim
-                                                    (slurp
-                                                      (io/resource filename)))
-                                                  #",")))
-
 (deftest solution
   (let [intcodes (read-program "input-day5")]
     (is (= 15314507 (compute intcodes [1])))
@@ -107,13 +114,6 @@
     0
     phase-sequence))
 
-(defn permutations [s]
-  (lazy-seq
-    (if (seq (rest s))
-      (apply concat (for [x s]
-                      (map #(cons x %) (permutations (remove #{x} s)))))
-      [s])))
-
 (deftest day7-examples
 
   (is (= 43210 (solve [4 3 2 1 0] [3 15 3 16 1002 16 10 16 1 16 15 15 4 15 99 0 0])))
@@ -125,37 +125,6 @@
   (is (= 17440 (let [program    (read-program "input-day7")
                      all-phases (permutations [0 1 2 3 4])]
                  (first (reverse (sort (map #(solve % program) all-phases))))))))
-
-(comment
-
-  (let [program    (read-program "input-day7")
-        all-phases (permutations [0 1 2 3 4])]
-    (first (reverse (sort (map #(solve % program) all-phases))))
-    )
-
-  (let [program    (read-program "input-day7")
-        all-phases (permutations [5 6 7 8 9])]
-    (first (reverse (sort (map #(solve % program) all-phases))))
-    )
-
-
-  (is (= 139629729
-         (solve-day-2 [3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6, 99, 0, 0, 5]
-                      [9, 8, 7, 6, 5])))
-
-  ;; run computer till output
-  (loop [program example-program-1
-         pointer 0
-         input   [9 0]
-         output  nil]
-    (cond
-      (= (nth program pointer) 99) [program pointer input output true] ;; terminate
-      output [program pointer input output halted]          ;; pass output to next amplifier/computer, capture current state
-      :else (let [[program pointer input output] (evolve program pointer input output)]
-              (recur program pointer input output halted))))
-
-  )
-
 
 (defn init-computer [program phase]
   [program 0 [phase] nil])
@@ -189,7 +158,7 @@
       input-signal
       (let [computer-state (run-computer computer input-signal)
             [program pointer input output halted computer-name] computer-state]
-        (println (drop 1 computer-state))
+        ;(println (drop 1 computer-state))
         (recur (if halted
                  computers
                  (conj (into [] computers) [program pointer input computer-name output]))

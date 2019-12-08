@@ -162,14 +162,21 @@
 
 (defn run-computer [computer amp-input]
   (let [[program pointer input-buffer] computer]
+
     (loop [program program
            pointer pointer
            input   (conj (into [] input-buffer) amp-input)
            output  nil]
+
       (cond
-        (= (nth program pointer) 99) [program pointer input output true] ;; terminate
-        output [program pointer input output false] ;; pass output to next amplifier/computer, capture current state
-        :else (let [[program pointer input output] (evolve program pointer input nil)]
+        (= (nth program pointer) 99)
+        [program pointer input (or output amp-input) true]              ;; terminate
+
+        output
+        [program pointer input output false]                ;; pass output to next amplifier/computer, capture current state
+
+        :else
+        (let [[program pointer input output] (evolve program pointer input nil)]
                 (recur program pointer input output))))))
 
 (defn init-computers [program phase-sequence]
@@ -182,10 +189,21 @@
       input-signal
       (let [computer-state (run-computer computer input-signal)
             [program pointer input output halted computer-name] computer-state]
+        (println (drop 1 computer-state))
         (recur (if halted
                  computers
                  (conj (into [] computers) [program pointer input computer-name output]))
                output)))))
+
+(defn solve-part2 []
+  (apply max (let [program    (read-program "input-day7")
+                   all-phases (permutations [5 6 7 8 9])]
+               (map
+                 (fn [phase-seq]
+                   (calculate-signal program phase-seq))
+                 all-phases
+                 )))
+  )
 
 (deftest part2
 
@@ -200,17 +218,11 @@
                             -5 54 1105 1 12 1 53 54 53 1008 54 0 55 1001 55 1 55 2 53 55 53 4
                             53 1001 56 -1 56 1005 56 6 99 0 0 0 0 10]
                            [9 7 8 5 6])
-         )))
+         ))
 
-(defn solve-part2 []
-  (apply max (let [program    (read-program "input-day7")
-                   all-phases (permutations [5 6 7 8 9])]
-               (map
-                 (fn [phase-seq]
-                   (calculate-signal program phase-seq))
-                 all-phases
-                 )))
-  )
+  (is (= 27561242 (calculate-signal
+                    (read-program "input-day7")
+                    [7 9 5 8 6])
+         ))
 
-(deftest part2
   (is (= 27561242 (solve-part2))))

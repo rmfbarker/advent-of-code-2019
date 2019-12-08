@@ -49,7 +49,7 @@
       ;; INPUT value, pause
       "03" [(assoc program (nth parameters 0) (first input))
             (+ 2 pointer)
-            (into [] (rest input))
+            (rest input)
             output]
 
       ;; OUTPUT value, stop
@@ -134,22 +134,22 @@
 
     (loop [program program
            pointer pointer
-           input   (conj (into [] input-buffer) amp-input)
+           input   (conj input-buffer amp-input)
            output  nil]
 
       (cond
         (= (nth program pointer) 99)
-        [program pointer input (or output amp-input) true]              ;; terminate
+        [program pointer input (or output amp-input) true]
 
         output
-        [program pointer input output false]                ;; pass output to next amplifier/computer, capture current state
+        [program pointer input output false]
 
         :else
         (let [[program pointer input output] (evolve program pointer input nil)]
                 (recur program pointer input output))))))
 
 (defn init-computers [program phase-sequence]
-  (mapv #(init-computer program %) phase-sequence))
+  (map #(init-computer program %) phase-sequence))
 
 (defn calculate-signal [program phase-sequence]
   (loop [[computer & computers] (init-computers program phase-sequence)

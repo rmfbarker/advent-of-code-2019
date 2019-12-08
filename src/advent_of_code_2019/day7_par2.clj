@@ -3,12 +3,12 @@
             [clojure.test :refer :all]))
 
 (defn read-program [filename]
-  (mapv read-string (clojure.string/split
-
-                      (clojure.string/trim
-                                                    (slurp
-                                                      (io/resource filename)))
-                                                  #",")))
+  (mapv read-string
+        (-> filename
+            io/resource
+            slurp
+            clojure.string/trim
+            (clojure.string/split #","))))
 
 (defn permutations [s]
   (lazy-seq

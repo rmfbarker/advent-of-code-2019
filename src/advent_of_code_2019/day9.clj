@@ -17,18 +17,28 @@
              (repeat 0))]))
 
 (defn evolve [program pointer relative-base input]
-  (let [opcode        (get program pointer)
+  (let [opcode       (get program pointer)
         [instruction modes] (parse-opcode opcode)
-        get-parameter (fn [pos]
-                        (let [mode  (nth modes pos)
-                              param (get program (+ (inc pos) pointer))
-                              value (condp = mode
+
+        get-address (fn [pos]
+                      (let [mode    (nth modes pos)
+                            param   (get program (+ (inc pos) pointer))
+                            address (condp = mode
                                       0 param
-                                      ;1 param
+                                      1 param
                                       2 (+ relative-base param))]
-                          value)
-                        )
-        get-value     (fn [pos]
+                        address))
+
+        write-memory (fn [pos value]
+                       (let [mode    (nth modes pos)
+                             param   (get program (+ (inc pos) pointer))
+                             address (condp = mode
+                                       0 param
+                                       ;1 param
+                                       2 (+ relative-base param))]
+                         (assoc program address value)))
+
+        read-memory  (fn [pos]
                         (let [mode  (nth modes pos)
                               param (get program (+ (inc pos) pointer))
                               value (condp = mode
@@ -38,43 +48,39 @@
                           value))]
     (condp = instruction
       ;; ADD
-      "01" (do
-             [(assoc program (get-parameter 2) (+
-                                                 (get-value 0)
-                                                 (get-value 1)))
-              (+ 4 pointer)
-              relative-base
-              input
-              nil])
+      "01" [(write-memory 2 (+ (read-memory 0)
+                               (read-memory 1)))
+            (+ 4 pointer)
+            relative-base
+            input
+            nil]
 
       ;; MULTIPLY
-      "02" [(assoc program (get-parameter 2) (*
-                                               (get-value 0)
-                                               (get-value 1)))
+      "02" [(write-memory 2 (* (read-memory 0)
+                               (read-memory 1)))
             (+ 4 pointer)
             relative-base
             input
             nil]
 
       ;; INPUT value, pause if nothing in buffer
-      "03" [(assoc program (get-parameter 0) (first input))
+      "03" [(write-memory 0 (first input))
             (+ 2 pointer)
             relative-base
             (rest input)
             nil]
 
       ;; OUTPUT value, stop; should we be conj'ing to the output?
-      "04" (do
-             [program
-              (+ 2 pointer)
-              relative-base
-              input
-              (get-value 0)])
+      "04" [program
+            (+ 2 pointer)
+            relative-base
+            input
+            (read-memory 0)]
 
       ;; JUMP if true
       "05" [program
-            (if (not= 0 (get-value 0))
-              (get-value 1)
+            (if (not= 0 (read-memory 0))
+              (read-memory 1)
               (+ 3 pointer))
             relative-base
             input
@@ -82,38 +88,37 @@
 
       ;; JUMP if false
       "06" [program
-            (if (= 0 (get-value 0))
-              (get-value 1)
+            (if (= 0 (read-memory 0))
+              (read-memory 1)
               (+ 3 pointer))
             relative-base
             input
             nil]
 
       ;; LESS THAN
-      "07" [(assoc program (get-parameter 2)
-                           (if (< (get-value 0) (get-value 1))
-                             1 0))
+      "07" [(write-memory 2
+                          (if (< (read-memory 0) (read-memory 1))
+                            1 0))
             (+ 4 pointer)
             relative-base
             input
             nil]
 
       ;; Equals
-      "08" [(assoc program (get-parameter 2)
-                           (if (= (get-value 0) (get-value 1))
-                             1 0))
+      "08" [(write-memory 2
+                          (if (= (read-memory 0) (read-memory 1))
+                            1 0))
             (+ 4 pointer)
             relative-base
             input
             nil]
 
       ;; adjust relative base
-      "09" (do
-             [program
-              (+ 2 pointer)
-              (+ relative-base (get-value 0))
-              input
-              nil])
+      "09" [program
+            (+ 2 pointer)
+            (+ relative-base (read-memory 0))
+            input
+            nil]
       )))
 
 (defn compute [program input]

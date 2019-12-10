@@ -17,35 +17,26 @@
              (repeat 0))]))
 
 (defn evolve [program pointer relative-base input]
-  (let [opcode       (get program pointer)
+  (let [opcode        (get program pointer)
         [instruction modes] (parse-opcode opcode)
 
-        get-address (fn [pos]
-                      (let [mode    (nth modes pos)
-                            param   (get program (+ (inc pos) pointer))
-                            address (condp = mode
-                                      0 param
-                                      1 param
-                                      2 (+ relative-base param))]
-                        address))
+        get-parameter (fn [pos] (get program (+ (inc pos) pointer)))
+        mode          (fn [pos] (nth modes pos))
 
-        write-memory (fn [pos value]
-                       (let [mode    (nth modes pos)
-                             param   (get program (+ (inc pos) pointer))
-                             address (condp = mode
-                                       0 param
-                                       ;1 param
-                                       2 (+ relative-base param))]
-                         (assoc program address value)))
+        write-memory  (fn [pos value]
+                        (let [param (get-parameter pos)]
+                          (assoc program (condp = (mode pos)
+                                           0 param
+                                           ;1 param
+                                           2 (+ relative-base param)) value)))
 
-        read-memory  (fn [pos]
-                        (let [mode  (nth modes pos)
-                              param (get program (+ (inc pos) pointer))
-                              value (condp = mode
-                                      0 (get program param 0)
-                                      1 param
-                                      2 (get program (+ relative-base param) 0))]
-                          value))]
+        read-memory   (fn [pos]
+                        (let [param (get-parameter pos)]
+                          (condp = (mode pos)
+                            0 (get program param 0)
+                            1 param
+                            2 (get program (+ relative-base param) 0))))]
+
     (condp = instruction
       ;; ADD
       "01" [(write-memory 2 (+ (read-memory 0)
@@ -118,8 +109,7 @@
             (+ 2 pointer)
             (+ relative-base (read-memory 0))
             input
-            nil]
-      )))
+            nil])))
 
 (defn compute [program input]
   (loop [program       (into {} (map-indexed vector program))
@@ -140,8 +130,7 @@
 
   (let [prog [104, 1125899906842624, 99]]
     (is (= (second prog)
-           (first (compute prog nil)))))
-  )
+           (first (compute prog nil))))))
 
 (deftest solution
 

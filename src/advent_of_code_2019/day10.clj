@@ -57,7 +57,6 @@
 
 (defn order-asteroids [station-coord]
   (let [asteroids       (parse-asteroids real-input)
-
         other-asteroids (remove #{station-coord} asteroids)]
     (map second (sort-by first
                          (map
@@ -67,68 +66,24 @@
                            (group-by second
                                      (map #(vector % (angle station-coord %)) other-asteroids)))))))
 
-(def ordered-asteroids (order-asteroids [19 14]))
 
 ;; Part 2
 
-(def best-position )
-
-(defn get-vaporized [n]
+(defn get-vaporized [n asteroid-order]
   (second (nth (sort
                  (fn [x y]
                    (compare [(second (first x)) (ffirst x)]
                             [(second (first y)) (ffirst y)]))
 
-                 (for [x (range (count ordered-asteroids))
-                       y (range (count (nth ordered-asteroids x)))]
-                   [[x y] (nth (nth ordered-asteroids x) y)]))
+                 (for [x (range (count asteroid-order))
+                       y (range (count (nth asteroid-order x)))]
+                   [[x y] (nth (nth asteroid-order x) y)]))
                (dec n))))
 
-(= [3 5] (get-vaporized 200))
+(deftest part2
+  (let [asteroids (parse-asteroids (slurp (io/resource "input-day10")))
+        [count coord] (best-position asteroids)]
+    (is (= 274 count))
+    (is (= [19 14] coord))
+    (is (= [3 5] (get-vaporized 200 (order-asteroids coord))))))
 
-(comment
-
-  (group-by second
-            (let [asteroids       (parse-asteroids example-input-3)
-                  co-ord          [11 13]
-                  other-asteroids (remove #{co-ord} asteroids)]
-              (map #(vector % (angle co-ord %)) other-asteroids)))
-
-  (sort-by
-    #(distance-between [11 13] (first %))
-    (second (first
-              (let [asteroids       (parse-asteroids example-input-3)
-                    co-ord          [11 13]
-                    other-asteroids (remove #{co-ord} asteroids)]
-                (group-by second
-                          (map #(vector % (angle co-ord %)) other-asteroids))))))
-
-
-  (def ordered-asteroids
-    (let [asteroids       (parse-asteroids example-input-3)
-          co-ord          [11 13]
-          other-asteroids (remove #{co-ord} asteroids)]
-      (map second (sort-by first
-                           (map
-                             (fn [[bearing asteroids]]
-                               (println bearing asteroids)
-                               [bearing (map first (sort-by #(distance-between co-ord (first %))
-                                                            asteroids))])
-                             (group-by second
-                                       (map #(vector % (angle co-ord %)) other-asteroids)))))))
-
-
-
-
-  (second (sort
-            (fn [x y]
-              (compare [(second (first x)) (ffirst x)]
-                       [(second (first y)) (ffirst y)]))
-
-            (for [x (range (count ordered-asteroids))
-                  y (range (count (nth ordered-asteroids x)))]
-              [[x y] (nth (nth ordered-asteroids x) y)])))
-
-
-
-  )

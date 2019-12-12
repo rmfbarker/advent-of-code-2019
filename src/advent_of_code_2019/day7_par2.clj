@@ -1,14 +1,7 @@
 (ns advent-of-code-2019.day7-par2
   (:require [clojure.java.io :as io]
-            [clojure.test :refer :all]))
-
-(defn read-program [filename]
-  (mapv read-string
-        (-> filename
-            io/resource
-            slurp
-            clojure.string/trim
-            (clojure.string/split #","))))
+            [clojure.test :refer :all]
+            [advent-of-code-2019.core :as core]))
 
 (defn permutations [s]
   (lazy-seq
@@ -17,15 +10,9 @@
                       (map #(cons x %) (permutations (remove #{x} s)))))
       [s])))
 
-(defn parse-opcode [x]
-  (let [x (format "%02d" x)]
-    [(subs x (- (count x) 2))
-     (concat (map #(Integer/parseInt (str %)) (drop 2 (reverse x)))
-             (repeat 0))]))
-
 (defn evolve [program pointer input]
   (let [[opcode & parameters] (drop pointer program)
-        [instruction modes] (parse-opcode opcode)
+        [instruction modes] (core/parse-opcode opcode)
         get-value (fn [pos]
                     (let [param (nth parameters pos)
                           mode  (nth modes pos)]
@@ -92,27 +79,12 @@
             input
             nil])))
 
-(defn compute [program input]
-  (loop [program program
-         pointer 0
-         input   input
-         output  nil]
-    (if (= (nth program pointer) 99)
-      output
-      (let [[program pointer input output] (evolve program pointer input)]
-        (recur program pointer input output)))))
-
-(deftest solution
-  (let [intcodes (read-program "input-day5")]
-    (is (= 15314507 (compute intcodes [1])))
-    (is (= 652726 (compute intcodes [5])))))
-
 (defn solve [phase-sequence program]
   (reduce
     (fn [output phase]
-      (compute
-        program
-        [phase output]))
+      (first (core/compute
+         program
+         [phase output])))
     0
     phase-sequence))
 
@@ -124,7 +96,7 @@
   (is (= 65210 (solve [1, 0, 4, 3, 2] [3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33, 1002, 33, 7, 33, 1, 33, 31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0]))))
 
 (deftest day7-part1
-  (is (= 17440 (let [program    (read-program "input-day7")
+  (is (= 17440 (let [program    (core/read-program "input-day7")
                      all-phases (permutations [0 1 2 3 4])]
                  (first (reverse (sort (map #(solve % program) all-phases))))))))
 
@@ -164,22 +136,19 @@
                output)))))
 
 (defn solve-part2 []
-  (apply max (let [program    (read-program "input-day7")
+  (apply max (let [program    (core/read-program "input-day7")
                    all-phases (permutations [5 6 7 8 9])]
                (map
                  (fn [phase-seq]
                    (calculate-signal program phase-seq))
-                 all-phases
-                 )))
-  )
+                 all-phases))))
 
 (deftest part2
 
   (is (= 139629729
          (calculate-signal [3 26 1001 26 -4 26 3 27 1002 27 2 27 1 27 26
                             27 4 27 1001 28 -1 28 1005 28 6 99 0 0 5]
-                           [9 8 7 6 5])
-         ))
+                           [9 8 7 6 5])))
 
   (is (= 18216
          (calculate-signal [3 52 1001 52 -5 52 3 53 1 52 56 54 1007 54 5 55 1005 55 26 1001 54
@@ -189,8 +158,7 @@
          ))
 
   (is (= 27561242 (calculate-signal
-                    (read-program "input-day7")
-                    [7 9 5 8 6])
-         ))
+                    (core/read-program "input-day7")
+                    [7 9 5 8 6])))
 
   (is (= 27561242 (solve-part2))))

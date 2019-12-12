@@ -4,5 +4,5 @@
   :main ^:skip-aot advent-of-code-2019.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :test-paths ["src" "src/test/clojure"]
+  :test-paths ["src" "test"]
   :plugins [[lein-auto "0.1.3"]])

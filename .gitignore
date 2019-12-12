@@ -22,3 +22,4 @@ pom.xml.asc
 .hgignore
 .hg/
 /.idea/
+/advent-of-code-2019.iml

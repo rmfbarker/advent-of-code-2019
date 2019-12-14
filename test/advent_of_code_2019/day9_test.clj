@@ -1,6 +1,6 @@
 (ns advent-of-code-2019.day9-test
   (:require [clojure.test :refer :all]
-            [advent-of-code-2019.core :as core]))
+            [advent-of-code-2019.intcode :as core]))
 
 (deftest examples
   (is (= [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]

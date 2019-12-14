@@ -1,6 +1,6 @@
 (ns advent-of-code-2019.day5-test
   (:require [clojure.test :refer :all]
-            [advent-of-code-2019.core :as core]))
+            [advent-of-code-2019.intcode :as core]))
 
 ;; Day 5
 (deftest day-5

@@ -1,7 +1,7 @@
 (ns advent-of-code-2019.day7
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]
-            [advent-of-code-2019.core :as core]))
+            [advent-of-code-2019.intcode :as core]))
 
 (defn solve [phase-sequence program]
   (reduce

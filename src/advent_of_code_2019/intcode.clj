@@ -1,4 +1,4 @@
-(ns advent-of-code-2019.core
+(ns advent-of-code-2019.intcode
   (:require [clojure.java.io :as io]))
 
 (defn read-program [filename]

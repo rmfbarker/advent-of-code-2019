@@ -3,7 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.set]
             [clojure.test :refer :all]
-            [advent-of-code-2019.core :as core]))
+            [advent-of-code-2019.intcode :as core]))
 
 ;; Day 1
 

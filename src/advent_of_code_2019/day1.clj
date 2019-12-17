@@ -2,8 +2,7 @@
   (:gen-class)
   (:require [clojure.java.io :as io]
             [clojure.set]
-            [clojure.test :refer :all]
-            [advent-of-code-2019.intcode :as core]))
+            [clojure.test :refer :all]))
 
 ;; Day 1
 
